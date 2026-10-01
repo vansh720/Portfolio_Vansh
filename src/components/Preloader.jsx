@@ -70,10 +70,10 @@ export default function Preloader({ onReveal, onDone }) {
 
         <div>
           <div className="flex items-end justify-between gap-6">
-            <p className="overflow-hidden font-serif text-[clamp(1.5rem,3vw,2.75rem)] italic leading-tight">
+            <p className="overflow-hidden font-serif text-[clamp(1.15rem,2vw,1.75rem)] italic leading-tight">
               <span className="pl-in block">Full stack, from schema to cloud.</span>
             </p>
-            <p className="overflow-hidden font-display text-[clamp(5rem,20vw,18rem)] font-bold leading-[0.8] tracking-[-0.06em] tabular-nums">
+            <p className="overflow-hidden text-[clamp(3.5rem,11vw,9rem)] font-semibold leading-[0.85] tracking-[-0.06em] tabular-nums">
               <span ref={count} className="pl-in block">
                 000
               </span>

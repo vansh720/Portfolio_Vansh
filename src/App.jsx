@@ -8,6 +8,7 @@ import Preloader from './components/Preloader';
 import Nav from './components/Nav';
 import Cursor from './components/Cursor';
 import ScrollProgress from './components/ScrollProgress';
+import BackToTop from './components/BackToTop';
 import Home from './pages/Home';
 import CaseStudy from './pages/CaseStudy';
 import NotFound from './pages/NotFound';
@@ -81,6 +82,7 @@ function Shell() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AnimatePresence>
+      <BackToTop />
       <Cursor />
       {!loaderGone && <Preloader onReveal={handleReveal} onDone={handleLoaderDone} />}
       <div className="grain" aria-hidden="true" />

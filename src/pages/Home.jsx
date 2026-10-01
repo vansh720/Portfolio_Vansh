@@ -3,7 +3,7 @@ import { useLocation } from 'react-router';
 import { useApp } from '../context/AppContext';
 import { usePageSetup } from '../hooks/usePageSetup';
 import { ScrollTrigger } from '../lib/gsap';
-import { scrollToTarget } from '../lib/utils';
+import { PAGE_SHEET, scrollToTarget } from '../lib/utils';
 import PageTransition from '../components/PageTransition';
 import Marquee from '../components/Marquee';
 import Footer from '../components/Footer';
@@ -35,15 +35,17 @@ export default function Home() {
 
   return (
     <PageTransition>
-      <main id="main" tabIndex={-1} className="outline-none">
-        <Hero />
-        <Marquee />
-        <About />
-        <Work />
-        <Stack />
-        <Experience />
-        <Contact />
-      </main>
+      <div className={PAGE_SHEET}>
+        <main id="main" tabIndex={-1} className="outline-none">
+          <Hero />
+          <Marquee />
+          <About />
+          <Work />
+          <Stack />
+          <Experience />
+          <Contact />
+        </main>
+      </div>
       <Footer />
     </PageTransition>
   );

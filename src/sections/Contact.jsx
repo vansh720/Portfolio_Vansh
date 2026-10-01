@@ -6,8 +6,9 @@ import { AnimatePresence, motion } from 'motion/react';
 import { ArrowUpRight, Check, CircleAlert, Copy, LoaderCircle, Send } from 'lucide-react';
 import { profile } from '../data/content';
 import { gsap, SplitText, useGSAP, prefersReducedMotion } from '../lib/gsap';
-import { cn, EASE_OUT } from '../lib/utils';
-import { Magnetic, RollText, SectionLabel } from '../components/ui';
+import { cn, EASE_OUT, trackPointer } from '../lib/utils';
+import { Button, Magnetic, RollText, SectionLabel } from '../components/ui';
+import { CircularText, Reveal, RevealGroup, RevealItem } from '../components/motion';
 
 const TOPICS = [
   { value: 'role', label: 'A full-time role' },
@@ -54,10 +55,20 @@ function CopyEmail() {
     <button
       type="button"
       onClick={copy}
-      className="grid size-11 shrink-0 place-items-center rounded-full border border-line transition-colors hover:border-fg"
+      className="relative grid size-10 shrink-0 place-items-center overflow-hidden rounded-full border border-line transition-colors hover:border-fg/40"
       aria-label={copied ? 'Email copied' : 'Copy email address'}
     >
-      {copied ? <Check className="size-4 text-accent-ink" /> : <Copy className="size-4" />}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.span
+          key={copied ? 'done' : 'copy'}
+          initial={{ scale: 0.3, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.3, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 28 }}
+        >
+          {copied ? <Check className="size-4 text-accent-ink" /> : <Copy className="size-4" />}
+        </motion.span>
+      </AnimatePresence>
       <span className="sr-only" aria-live="polite">
         {copied ? 'Copied to clipboard' : ''}
       </span>
@@ -68,22 +79,35 @@ function CopyEmail() {
 function Field({ id, label, error, children }) {
   return (
     <div>
-      <label htmlFor={id} className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">
+      <label htmlFor={id} className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
         {label} <span className="text-accent-ink" aria-hidden="true">*</span>
       </label>
-      {children}
-      {error && (
-        <p id={`${id}-error`} role="alert" className="mt-2 flex items-center gap-2 text-sm text-accent-ink">
-          <CircleAlert className="size-4 shrink-0" aria-hidden="true" />
-          {error.message}
-        </p>
-      )}
+      <div className="field relative">
+        {children}
+        <span className="field-line" aria-hidden="true" />
+      </div>
+      <AnimatePresence initial={false}>
+        {error && (
+          <motion.p
+            id={`${id}-error`}
+            role="alert"
+            className="mt-2 flex items-center gap-2 text-sm text-accent-ink"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.3, ease: EASE_OUT }}
+          >
+            <CircleAlert className="size-4 shrink-0" aria-hidden="true" />
+            {error.message}
+          </motion.p>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
 const inputClass =
-  'mt-2 w-full border-b border-line bg-transparent py-3 text-lg outline-none transition-colors placeholder:text-muted/70 focus:border-accent aria-[invalid=true]:border-accent-ink';
+  'mt-1 w-full border-b border-line bg-transparent py-3 text-base outline-none transition-colors placeholder:text-muted/60 aria-[invalid=true]:border-accent-ink';
 
 export default function Contact() {
   const root = useRef(null);
@@ -113,184 +137,220 @@ export default function Contact() {
   useGSAP(
     () => {
       if (prefersReducedMotion()) return;
-      const split = SplitText.create('.contact-line', { type: 'chars' });
+      const split = SplitText.create('.contact-title', { type: 'chars' });
       gsap.from(split.chars, {
-        yPercent: 115,
-        duration: 1.1,
+        yPercent: 60,
+        autoAlpha: 0,
+        filter: 'blur(14px)',
+        duration: 1.2,
         ease: 'expo.out',
-        stagger: 0.025,
-        scrollTrigger: { trigger: '.contact-title', start: 'top 80%' },
+        stagger: 0.022,
+        scrollTrigger: { trigger: '.contact-title', start: 'top 82%' },
       });
     },
     { scope: root },
   );
 
   return (
-    <section ref={root} id="contact" className="px-gutter pb-12 pt-24 md:pb-16 md:pt-36">
-      <SectionLabel index="05" title="Contact" />
-      <h2 className="contact-title mt-8 font-display text-[clamp(2.5rem,10.5vw,11rem)] font-bold uppercase leading-[0.86] tracking-[-0.055em]">
-        <span className="block overflow-hidden pb-[0.04em]">
-          <span className="contact-line inline-block">Have an idea</span>
-        </span>
-        <span className="block overflow-hidden pb-[0.06em]">
-          <span className="contact-line inline-block">
-            worth <span className="font-serif font-normal lowercase italic tracking-[-0.02em] text-accent">shipping?</span>
-          </span>
-        </span>
-      </h2>
-
-      <div className="mt-16 grid gap-16 lg:grid-cols-12 lg:gap-12">
-        <div className="lg:col-span-5">
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">Write to me</p>
-          <div className="mt-3 flex items-center gap-3">
-            <a
-              href={`mailto:${profile.email}`}
-              className="min-w-0 break-all font-display text-[clamp(1.35rem,2.4vw,2.1rem)] font-medium tracking-[-0.03em] hover:text-accent-ink"
-            >
-              {profile.email}
+    <section ref={root} id="contact" className="relative px-gutter pb-16 pt-24 md:pb-24 md:pt-32">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[70%] bg-[radial-gradient(60%_60%_at_15%_20%,color-mix(in_oklab,var(--accent)_10%,transparent),transparent)]"
+      />
+      <div className="relative">
+        <SectionLabel index="05" title="Contact" />
+        <div className="mt-6 flex items-end justify-between gap-8">
+          <h2 className="contact-title max-w-[16ch] text-[clamp(2.25rem,5.6vw,5.25rem)] font-semibold leading-[0.98] tracking-[-0.05em]">
+            Have an idea worth <span className="font-serif font-normal italic text-accent-ink">shipping?</span>
+          </h2>
+          <Reveal delay={0.3} className="hidden shrink-0 md:block">
+            <a href={`mailto:${profile.email}`} aria-label={`Email ${profile.email}`} className="group block">
+              <CircularText text="Write to me · Say hello · " className="size-32">
+                <span className="grid size-14 place-items-center rounded-full bg-accent text-on-accent transition-transform duration-500 group-hover:rotate-45 group-hover:scale-110">
+                  <ArrowUpRight className="size-5" />
+                </span>
+              </CircularText>
             </a>
-            <CopyEmail />
-          </div>
-
-          <ul className="mt-10 divide-y divide-line border-y border-line">
-            {CHANNELS.map((channel) => (
-              <li key={channel.label}>
-                <a
-                  href={channel.href}
-                  target={channel.external ? '_blank' : undefined}
-                  rel={channel.external ? 'noreferrer' : undefined}
-                  download={channel.download || undefined}
-                  className="group flex min-h-16 items-center justify-between gap-4 py-4"
-                >
-                  <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">{channel.label}</span>
-                  <span className="flex items-center gap-3 font-medium">
-                    <RollText>{channel.value}</RollText>
-                    <ArrowUpRight className="size-4 text-accent-ink transition-transform duration-500 group-hover:rotate-45" />
-                  </span>
-                </a>
-              </li>
-            ))}
-            <li className="flex min-h-16 items-center justify-between gap-4 py-4">
-              <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">Location</span>
-              <span className="text-right font-medium">{profile.location} · IST</span>
-            </li>
-          </ul>
+          </Reveal>
         </div>
 
-        <div className="lg:col-span-6 lg:col-start-7">
-          <AnimatePresence mode="wait" initial={false}>
-            {sent ? (
-              <motion.div
-                key="sent"
-                className="flex flex-col items-start gap-5 rounded-[28px] border border-line bg-surface p-8 md:p-10"
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -16 }}
-                transition={{ duration: 0.5, ease: EASE_OUT }}
-                role="status"
-              >
-                <span className="grid size-14 place-items-center rounded-full bg-accent text-on-accent">
-                  <Check className="size-6" />
-                </span>
-                <p className="font-display text-3xl font-semibold tracking-[-0.03em]">Your email is ready to send.</p>
-                <p className="max-w-[44ch] leading-relaxed text-muted">
-                  Your mail app should have opened with everything filled in — just hit send. If nothing opened, write to{' '}
-                  <a href={`mailto:${profile.email}`} className="text-fg underline underline-offset-4">
-                    {profile.email}
-                  </a>{' '}
-                  directly.
-                </p>
-                <button type="button" onClick={() => setSent(false)} className="btn btn-ghost group">
-                  <RollText>Write another message</RollText>
-                </button>
-              </motion.div>
-            ) : (
-              <motion.form
-                key="form"
-                noValidate
-                onSubmit={handleSubmit(onSubmit)}
-                className="flex flex-col gap-8"
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -16 }}
-                transition={{ duration: 0.5, ease: EASE_OUT }}
-              >
-                <fieldset>
-                  <legend className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">I’m reaching out about</legend>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {TOPICS.map((topic) => (
-                      <label key={topic.value} className="relative">
-                        <input type="radio" value={topic.value} {...register('topic')} className="peer sr-only" />
-                        <span
-                          className={cn(
-                            'inline-flex min-h-11 items-center rounded-full border border-line px-4 text-sm transition-colors',
-                            'hover:border-fg peer-checked:border-accent peer-checked:bg-accent peer-checked:text-on-accent',
-                            'peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent',
-                          )}
-                        >
-                          {topic.label}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
+        <div className="mt-14 grid gap-12 lg:grid-cols-12 lg:gap-10">
+          <div className="lg:col-span-5">
+            <Reveal>
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">Write to me</p>
+              <div className="mt-3 flex items-center gap-3">
+                <a
+                  href={`mailto:${profile.email}`}
+                  className="group min-w-0 break-all text-[clamp(1.2rem,1.9vw,1.6rem)] font-medium tracking-[-0.03em] transition-colors hover:text-accent-ink"
+                >
+                  {profile.email}
+                </a>
+                <CopyEmail />
+              </div>
+            </Reveal>
 
-                <div className="grid gap-8 md:grid-cols-2">
-                  <Field id="name" label="Your name" error={errors.name}>
-                    <input
-                      id="name"
-                      type="text"
-                      autoComplete="name"
-                      placeholder="Jane Doe"
-                      aria-invalid={errors.name ? 'true' : 'false'}
-                      aria-describedby={errors.name ? 'name-error' : undefined}
-                      className={inputClass}
-                      {...register('name')}
-                    />
-                  </Field>
-                  <Field id="email" label="Your email" error={errors.email}>
-                    <input
-                      id="email"
-                      type="email"
-                      inputMode="email"
-                      autoComplete="email"
-                      placeholder="jane@company.com"
-                      aria-invalid={errors.email ? 'true' : 'false'}
-                      aria-describedby={errors.email ? 'email-error' : undefined}
-                      className={inputClass}
-                      {...register('email')}
-                    />
-                  </Field>
-                </div>
+            <RevealGroup as="ul" className="mt-8 divide-y divide-line border-y border-line" stagger={0.07} delay={0.1}>
+              {CHANNELS.map((channel) => (
+                <RevealItem as="li" key={channel.label}>
+                  <a
+                    href={channel.href}
+                    target={channel.external ? '_blank' : undefined}
+                    rel={channel.external ? 'noreferrer' : undefined}
+                    download={channel.download || undefined}
+                    className="group flex min-h-14 items-center justify-between gap-4 py-3"
+                  >
+                    <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">{channel.label}</span>
+                    <span className="flex items-center gap-3 text-[15px] font-medium">
+                      <RollText>{channel.value}</RollText>
+                      <span className="grid size-7 place-items-center rounded-full border border-line transition-all duration-500 group-hover:rotate-45 group-hover:border-accent group-hover:bg-accent group-hover:text-on-accent">
+                        <ArrowUpRight className="size-3.5" />
+                      </span>
+                    </span>
+                  </a>
+                </RevealItem>
+              ))}
+              <RevealItem as="li" className="flex min-h-14 items-center justify-between gap-4 py-3">
+                <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">Location</span>
+                <span className="text-right text-[15px] font-medium">{profile.location} · IST</span>
+              </RevealItem>
+            </RevealGroup>
+          </div>
 
-                <Field id="message" label="Message" error={errors.message}>
-                  <textarea
-                    id="message"
-                    rows={5}
-                    placeholder="What are you building, and where could I help?"
-                    aria-invalid={errors.message ? 'true' : 'false'}
-                    aria-describedby={errors.message ? 'message-error' : 'message-help'}
-                    className={cn(inputClass, 'resize-none')}
-                    {...register('message')}
-                  />
-                  {!errors.message && (
-                    <p id="message-help" className="mt-2 text-sm text-muted">
-                      Sending opens your email app with this message ready to go.
+          <Reveal delay={0.15} className="lg:col-span-7">
+            <div
+              onPointerMove={trackPointer}
+              className="glow-card rounded-[28px] border border-line bg-surface/60 p-6 backdrop-blur-md md:p-9"
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                {sent ? (
+                  <motion.div
+                    key="sent"
+                    className="flex flex-col items-start gap-5 py-6"
+                    initial={{ opacity: 0, y: 24, filter: 'blur(8px)' }}
+                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                    exit={{ opacity: 0, y: -16, filter: 'blur(8px)' }}
+                    transition={{ duration: 0.5, ease: EASE_OUT }}
+                    role="status"
+                  >
+                    <motion.span
+                      className="grid size-14 place-items-center rounded-full bg-accent text-on-accent"
+                      initial={{ scale: 0, rotate: -90 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 16, delay: 0.1 }}
+                    >
+                      <Check className="size-6" />
+                    </motion.span>
+                    <p className="text-2xl font-semibold tracking-[-0.03em]">Your email is ready to send.</p>
+                    <p className="max-w-[44ch] text-[15px] leading-relaxed text-muted">
+                      Your mail app should have opened with everything filled in — just hit send. If nothing opened,
+                      write to{' '}
+                      <a href={`mailto:${profile.email}`} className="text-fg underline underline-offset-4">
+                        {profile.email}
+                      </a>{' '}
+                      directly.
                     </p>
-                  )}
-                </Field>
+                    <Button as="button" type="button" variant="ghost" magnetic={false} onClick={() => setSent(false)} icon={null}>
+                      Write another message
+                    </Button>
+                  </motion.div>
+                ) : (
+                  <motion.form
+                    key="form"
+                    noValidate
+                    onSubmit={handleSubmit(onSubmit)}
+                    className="flex flex-col gap-7"
+                    initial={{ opacity: 0, y: 24, filter: 'blur(8px)' }}
+                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                    exit={{ opacity: 0, y: -16, filter: 'blur(8px)' }}
+                    transition={{ duration: 0.5, ease: EASE_OUT }}
+                  >
+                    <fieldset>
+                      <legend className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">I’m reaching out about</legend>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {TOPICS.map((topic) => (
+                          <label key={topic.value} className="relative">
+                            <input type="radio" value={topic.value} {...register('topic')} className="peer sr-only" />
+                            <span
+                              className={cn(
+                                'inline-flex min-h-10 items-center rounded-full border border-line px-4 text-sm transition-all duration-300',
+                                'hover:border-fg/40 peer-checked:border-accent peer-checked:bg-accent peer-checked:text-on-accent',
+                                'peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent',
+                              )}
+                            >
+                              {topic.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
 
-                <div>
-                  <Magnetic>
-                    <button type="submit" disabled={isSubmitting} className="btn btn-accent group disabled:opacity-50">
-                      <RollText>{isSubmitting ? 'Opening mail…' : 'Send message'}</RollText>
-                      {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <Send className="size-4" />}
-                    </button>
-                  </Magnetic>
-                </div>
-              </motion.form>
-            )}
-          </AnimatePresence>
+                    <div className="grid gap-7 md:grid-cols-2">
+                      <Field id="name" label="Your name" error={errors.name}>
+                        <input
+                          id="name"
+                          type="text"
+                          autoComplete="name"
+                          placeholder="Jane Doe"
+                          aria-invalid={errors.name ? 'true' : 'false'}
+                          aria-describedby={errors.name ? 'name-error' : undefined}
+                          className={inputClass}
+                          {...register('name')}
+                        />
+                      </Field>
+                      <Field id="email" label="Your email" error={errors.email}>
+                        <input
+                          id="email"
+                          type="email"
+                          inputMode="email"
+                          autoComplete="email"
+                          placeholder="jane@company.com"
+                          aria-invalid={errors.email ? 'true' : 'false'}
+                          aria-describedby={errors.email ? 'email-error' : undefined}
+                          className={inputClass}
+                          {...register('email')}
+                        />
+                      </Field>
+                    </div>
+
+                    <Field id="message" label="Message" error={errors.message}>
+                      <textarea
+                        id="message"
+                        rows={4}
+                        placeholder="What are you building, and where could I help?"
+                        aria-invalid={errors.message ? 'true' : 'false'}
+                        aria-describedby={errors.message ? 'message-error' : 'message-help'}
+                        className={cn(inputClass, 'resize-none')}
+                        {...register('message')}
+                      />
+                    </Field>
+                    {!errors.message && (
+                      <p id="message-help" className="-mt-4 text-[13px] text-muted">
+                        Sending opens your email app with this message ready to go.
+                      </p>
+                    )}
+
+                    <div>
+                      <Magnetic>
+                        <button type="submit" disabled={isSubmitting} className="btn btn-accent group disabled:opacity-60">
+                          <RollText>{isSubmitting ? 'Opening mail…' : 'Send message'}</RollText>
+                          {isSubmitting ? (
+                            <span className="-mr-[0.4rem] grid size-7 place-items-center" aria-hidden="true">
+                              <LoaderCircle className="size-4 animate-spin" />
+                            </span>
+                          ) : (
+                            <span className="btn-icon" data-dir="right" aria-hidden="true">
+                              <Send />
+                              <Send />
+                            </span>
+                          )}
+                        </button>
+                      </Magnetic>
+                    </div>
+                  </motion.form>
+                )}
+              </AnimatePresence>
+            </div>
+          </Reveal>
         </div>
       </div>
     </section>

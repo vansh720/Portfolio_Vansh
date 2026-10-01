@@ -21,11 +21,6 @@ export const navLinks = [
   { id: 'contact', label: 'Contact' },
 ];
 
-export const marqueeRows = [
-  ['MongoDB', 'Express.js', 'React.js', 'Node.js', 'AWS EC2', 'AWS S3', 'Docker', 'Redis'],
-  ['Razorpay webhooks', 'Twilio reminders', 'REST APIs', 'Role-based access', 'Firebase', 'SQL', 'Git'],
-];
-
 export const aboutFacts = [
   { k: 'Based in', v: 'Ambala City, India' },
   { k: 'Currently', v: 'Full Stack Developer, Bexo.ai' },

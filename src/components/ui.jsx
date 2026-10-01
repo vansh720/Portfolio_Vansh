@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import { ArrowUpRight } from 'lucide-react';
 import { gsap, prefersReducedMotion } from '../lib/gsap';
 import { cn } from '../lib/utils';
+import { Scramble } from './motion';
 
 /** The eight-spoke mark used as the brand motif. */
 export function Asterisk({ className }) {
@@ -16,12 +18,15 @@ export function Asterisk({ className }) {
   );
 }
 
+/** Small pill + scrambled mono title that opens each section. */
 export function SectionLabel({ index, title, className }) {
   return (
-    <p className={cn('flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.22em] text-muted', className)}>
-      <span className="text-accent-ink">({index})</span>
-      <span className="h-px w-10 bg-line" aria-hidden="true" />
-      {title}
+    <p className={cn('flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.2em] text-muted', className)}>
+      <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface/60 px-2.5 py-1 text-accent-ink">
+        <span className="size-1.5 rounded-full bg-accent" aria-hidden="true" />
+        {index}
+      </span>
+      <Scramble text={title} />
     </p>
   );
 }
@@ -37,7 +42,7 @@ export function RollText({ children }) {
 }
 
 /** Pulls its child toward the pointer on fine-pointer devices. */
-export function Magnetic({ children, strength = 0.3, className }) {
+export function Magnetic({ children, strength = 0.25, className }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -78,6 +83,35 @@ export function Magnetic({ children, strength = 0.3, className }) {
       {children}
     </span>
   );
+}
+
+/**
+ * Pill button with a shine sweep, rolling label and an icon that slides out and back in.
+ * `as` can be 'a', 'button' or a router Link.
+ */
+export function Button({
+  as: Comp = 'a',
+  variant = 'accent',
+  size,
+  icon: Icon = ArrowUpRight,
+  dir,
+  magnetic = true,
+  className,
+  children,
+  ...props
+}) {
+  const button = (
+    <Comp className={cn('btn group', `btn-${variant}`, size === 'sm' && 'btn-sm', className)} {...props}>
+      <RollText>{children}</RollText>
+      {Icon && (
+        <span className="btn-icon" data-dir={dir} aria-hidden="true">
+          <Icon />
+          <Icon />
+        </span>
+      )}
+    </Comp>
+  );
+  return magnetic ? <Magnetic>{button}</Magnetic> : button;
 }
 
 const istFormatter = new Intl.DateTimeFormat('en-GB', {

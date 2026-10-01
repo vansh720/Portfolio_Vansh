@@ -3,6 +3,7 @@ import { Award } from 'lucide-react';
 import { certifications, experience } from '../data/content';
 import { gsap, ScrollTrigger, useGSAP, prefersReducedMotion } from '../lib/gsap';
 import { SectionLabel } from '../components/ui';
+import { Reveal, RevealText } from '../components/motion';
 
 export default function Experience() {
   const root = useRef(null);
@@ -19,10 +20,12 @@ export default function Experience() {
 
       gsap.utils.toArray('.tl-item').forEach((item) => {
         gsap.from(item.querySelector('.tl-body'), {
-          y: 50,
+          y: 40,
           autoAlpha: 0,
-          duration: 1,
+          filter: 'blur(10px)',
+          duration: 1.1,
           ease: 'expo.out',
+          clearProps: 'filter',
           scrollTrigger: { trigger: item, start: 'top 85%' },
         });
         ScrollTrigger.create({ trigger: item, start: 'top 65%', toggleClass: { targets: item, className: 'is-on' } });
@@ -32,32 +35,31 @@ export default function Experience() {
   );
 
   return (
-    <section ref={root} id="experience" className="px-gutter py-24 md:py-36">
-      <div className="grid gap-16 lg:grid-cols-12">
+    <section ref={root} id="experience" className="px-gutter py-24 md:py-32">
+      <div className="grid gap-14 lg:grid-cols-12">
         <div className="lg:sticky lg:top-28 lg:col-span-5 lg:self-start">
           <SectionLabel index="04" title="Experience" />
-          <h2 className="mt-5 font-display text-[clamp(2.5rem,5vw,5rem)] font-semibold leading-[0.92] tracking-[-0.045em]">
-            Training room
-            <br />
+          <RevealText as="h2" className="mt-5 text-[clamp(2rem,4vw,3.5rem)] font-semibold leading-[1] tracking-[-0.045em]">
+            Training room <br />
             to <span className="font-serif font-normal italic text-accent-ink">production.</span>
-          </h2>
-          <p className="mt-6 max-w-[40ch] leading-relaxed text-muted">
+          </RevealText>
+          <Reveal as="p" delay={0.1} className="mt-5 max-w-[40ch] text-[15px] leading-relaxed text-muted">
             Structured MERN training, then a stipend internship, then a full-time role at Bexo.ai — all inside a year.
-          </p>
+          </Reveal>
 
-          <div className="mt-10 rounded-3xl border border-line p-6">
-            <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted">
+          <Reveal delay={0.2} className="mt-8 rounded-[22px] border border-line bg-surface/50 p-5">
+            <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
               <Award className="size-4 text-accent-ink" aria-hidden="true" /> Certifications
             </p>
-            <ul className="mt-4 divide-y divide-line">
+            <ul className="mt-3 divide-y divide-line">
               {certifications.map((cert) => (
                 <li key={cert.title} className="py-3">
-                  <p className="font-semibold tracking-tight">{cert.title}</p>
-                  <p className="text-sm text-muted">{cert.by}</p>
+                  <p className="text-[15px] font-semibold tracking-[-0.01em]">{cert.title}</p>
+                  <p className="text-[13px] text-muted">{cert.by}</p>
                 </li>
               ))}
             </ul>
-          </div>
+          </Reveal>
         </div>
 
         <div className="tl-list relative lg:col-span-7">
@@ -66,28 +68,28 @@ export default function Experience() {
           </span>
           <ol>
             {experience.map((item) => (
-              <li key={`${item.role}-${item.period}`} className="tl-item relative pb-14 pl-10 last:pb-0">
+              <li key={`${item.role}-${item.period}`} className="tl-item relative pb-12 pl-10 last:pb-0">
                 <span aria-hidden="true" className="tl-dot absolute left-0 top-1.5 size-[11px] rounded-full border border-line bg-bg" />
                 <div className="tl-body">
-                  <p className="flex flex-wrap items-center gap-3 font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
+                  <p className="flex flex-wrap items-center gap-3 font-mono text-[11px] uppercase tracking-[0.16em] text-muted">
                     {item.period}
                     {item.current && (
-                      <span className="inline-flex items-center gap-2 rounded-full border border-line px-2.5 py-1 text-fg">
+                      <span className="inline-flex items-center gap-2 rounded-full border border-line px-2.5 py-0.5 text-fg">
                         <span className="live-dot" aria-hidden="true" /> Now
                       </span>
                     )}
                   </p>
-                  <h3 className="mt-3 font-display text-[clamp(1.6rem,2.6vw,2.4rem)] font-semibold leading-tight tracking-[-0.035em]">
+                  <h3 className="mt-2.5 text-[clamp(1.2rem,1.8vw,1.5rem)] font-semibold leading-tight tracking-[-0.03em]">
                     {item.role}
                   </h3>
-                  <p className="mt-1 font-medium text-accent-ink">
+                  <p className="mt-1 text-[15px] font-medium text-accent-ink">
                     {item.org} <span className="font-normal text-muted">· {item.place}</span>
                   </p>
                   {item.points.length > 0 && (
-                    <ul className="mt-5 max-w-[62ch] space-y-3 leading-relaxed text-muted">
+                    <ul className="mt-4 max-w-[62ch] space-y-2.5 text-[15px] leading-relaxed text-muted">
                       {item.points.map((point) => (
                         <li key={point} className="flex gap-3">
-                          <span aria-hidden="true" className="mt-3 h-px w-3 shrink-0 bg-accent" />
+                          <span aria-hidden="true" className="mt-[0.7em] h-px w-3 shrink-0 bg-accent" />
                           {point}
                         </li>
                       ))}

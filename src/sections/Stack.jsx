@@ -1,12 +1,12 @@
 import { useRef } from 'react';
-import { motion } from 'motion/react';
 import { SiDocker, SiExpress, SiFirebase, SiGithub, SiJavascript, SiMongodb, SiNodedotjs, SiRazorpay, SiReact, SiRedis } from 'react-icons/si';
 import { FaAws } from 'react-icons/fa';
 import { TbBrandTwilio } from 'react-icons/tb';
 import { Binary, Braces, Database, ShieldCheck } from 'lucide-react';
 import { gsap, useGSAP, prefersReducedMotion } from '../lib/gsap';
-import { cn, EASE_OUT } from '../lib/utils';
+import { cn } from '../lib/utils';
 import { SectionLabel } from '../components/ui';
+import { Reveal, RevealText, TiltCard } from '../components/motion';
 
 const MERN = [
   { letter: 'M', name: 'MongoDB', role: 'Schemas & data', icon: SiMongodb },
@@ -59,34 +59,31 @@ const TERMINAL = [
   { prompt: false, text: '✓ shipped' },
 ];
 
-function Card({ className, children, index }) {
-  return (
-    <motion.div
-      className={cn('bento flex flex-col overflow-hidden rounded-[28px] border border-line bg-surface p-6 md:p-8', className)}
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.8, ease: EASE_OUT, delay: index * 0.07 }}
-    >
-      {children}
-    </motion.div>
-  );
-}
+const cardBase = 'flex flex-col overflow-hidden rounded-[24px] border border-line bg-surface p-6 md:p-7';
 
 function CardTitle({ children }) {
-  return <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">{children}</h3>;
+  return <h3 className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">{children}</h3>;
+}
+
+function SkillList({ items }) {
+  return (
+    <ul className="mt-5 flex flex-col divide-y divide-line">
+      {items.map(({ name, icon: Icon }) => (
+        <li key={name} className="group/s flex items-center gap-3.5 py-3">
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl border border-line bg-bg transition-colors duration-300 group-hover/s:border-accent group-hover/s:bg-accent group-hover/s:text-on-accent">
+            <Icon className="size-4" aria-hidden="true" />
+          </span>
+          <span className="text-[15px] font-medium tracking-[-0.01em] transition-transform duration-500 group-hover/s:translate-x-1">
+            {name}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 export default function Stack() {
   const root = useRef(null);
-
-  const onPointerMove = (e) => {
-    const card = e.target.closest('.bento');
-    if (!card) return;
-    const rect = card.getBoundingClientRect();
-    card.style.setProperty('--mx', `${e.clientX - rect.left}px`);
-    card.style.setProperty('--my', `${e.clientY - rect.top}px`);
-  };
 
   useGSAP(
     () => {
@@ -107,70 +104,65 @@ export default function Stack() {
   );
 
   return (
-    <section ref={root} id="stack" className="px-gutter py-24 md:py-36">
+    <section ref={root} id="stack" className="px-gutter py-24 md:py-32">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <SectionLabel index="03" title="Stack" />
-          <h2 className="mt-5 font-display text-[clamp(2.5rem,5vw,5rem)] font-semibold leading-[0.92] tracking-[-0.045em]">
+          <RevealText as="h2" className="mt-5 text-[clamp(2rem,4vw,3.5rem)] font-semibold leading-[1] tracking-[-0.045em]">
             One language, <span className="font-serif font-normal italic text-accent-ink">every layer.</span>
-          </h2>
+          </RevealText>
         </div>
-        <p className="max-w-[40ch] text-muted">
+        <Reveal as="p" delay={0.15} className="max-w-[40ch] text-[15px] leading-relaxed text-muted">
           JavaScript from the React interface to the Node workers — plus the cloud, payment and messaging pieces that
           turn an app into a product.
-        </p>
+        </Reveal>
       </div>
 
-      <div onPointerMove={onPointerMove} className="mt-14 grid gap-4 md:grid-cols-6">
-        <Card index={0} className="md:col-span-6 lg:col-span-4">
-          <div className="flex items-start justify-between gap-4">
+      <div className="mt-12 grid gap-4 md:grid-cols-6">
+        <TiltCard max={3} className={cn(cardBase, 'md:col-span-6 lg:col-span-4')}>
+          <div className="flex flex-wrap items-start justify-between gap-3">
             <CardTitle>Languages & frameworks</CardTitle>
-            <p className="flex items-center gap-2 text-sm text-muted">
-              <SiJavascript className="size-4 text-accent-ink" aria-hidden="true" /> JavaScript, front to back
+            <p className="flex items-center gap-2 rounded-full border border-line px-3 py-1 text-xs text-muted">
+              <SiJavascript className="size-3.5 text-accent-ink" aria-hidden="true" /> JavaScript, front to back
             </p>
           </div>
-          <p className="mt-4 max-w-[24ch] font-display text-[clamp(1.75rem,3vw,2.75rem)] font-semibold leading-[1] tracking-[-0.04em]">
+          <p className="mt-3 text-[clamp(1.4rem,2.2vw,2rem)] font-semibold leading-[1.05] tracking-[-0.04em]">
             The MERN core, end to end.
           </p>
-          <ul className="mt-10 grid flex-1 grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-4">
+          <ul className="mt-8 grid flex-1 grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-4">
             {MERN.map(({ letter, name, role, icon: Icon }) => (
-              <li key={name} className="group/l flex flex-col bg-surface p-5">
+              <li key={name} className="group/l relative flex flex-col bg-surface p-5 transition-colors duration-500 hover:bg-surface-2">
                 <span
-                  className="hollow font-display text-[clamp(4.5rem,11vw,10rem)] font-bold leading-[0.85] tracking-[-0.06em] transition-colors duration-500 group-hover/l:text-accent"
+                  className="hollow text-[clamp(3.5rem,6.5vw,6rem)] font-bold leading-[0.85] tracking-[-0.06em] transition-[color,transform] duration-700 group-hover/l:-translate-y-1 group-hover/l:text-accent"
                   aria-hidden="true"
                 >
                   {letter}
                 </span>
                 <span className="mt-auto pt-6">
-                  <Icon className="size-6" aria-hidden="true" />
+                  <Icon className="size-5 transition-transform duration-700 group-hover/l:rotate-[360deg]" aria-hidden="true" />
                 </span>
-                <span className="mt-3 font-semibold">{name}</span>
-                <span className="text-sm text-muted">{role}</span>
+                <span className="mt-2.5 text-[15px] font-semibold tracking-[-0.01em]">{name}</span>
+                <span className="text-[13px] text-muted">{role}</span>
               </li>
             ))}
           </ul>
-        </Card>
+        </TiltCard>
 
-        <Card index={1} className={GROUPS[0].className}>
-          <CardTitle>{GROUPS[0].title}</CardTitle>
-          <SkillList items={GROUPS[0].items} />
-        </Card>
-
-        {GROUPS.slice(1).map((group, i) => (
-          <Card key={group.key} index={i + 2} className={group.className}>
+        {GROUPS.map((group, i) => (
+          <TiltCard key={group.key} delay={0.08 * (i + 1)} className={cn(cardBase, group.className)}>
             <CardTitle>{group.title}</CardTitle>
             <SkillList items={group.items} />
-          </Card>
+          </TiltCard>
         ))}
 
-        <Card index={4} className="terminal bg-[#0c0b09]! text-[#ece5d8] md:col-span-3 lg:col-span-2">
+        <TiltCard delay={0.32} className={cn(cardBase, 'terminal bg-[#0c0b09]! text-[#ece5d8] md:col-span-3 lg:col-span-2')}>
           <div className="flex items-center gap-1.5" aria-hidden="true">
             <span className="size-2.5 rounded-full bg-[#ff5a1f]" />
             <span className="size-2.5 rounded-full bg-[#ece5d8]/30" />
             <span className="size-2.5 rounded-full bg-[#ece5d8]/30" />
             <span className="ml-3 font-mono text-[10px] uppercase tracking-[0.2em] text-[#a8a091]">deploy.sh</span>
           </div>
-          <pre className="mt-6 overflow-x-auto font-mono text-[12.5px] leading-[1.9]">
+          <pre className="mt-6 overflow-x-auto font-mono text-[12px] leading-[1.95]">
             {TERMINAL.map((line, i) => (
               <span key={i} className="term-line block w-fit whitespace-pre">
                 {line.prompt ? <span className="text-[#ff6a33]">$ </span> : null}
@@ -179,23 +171,8 @@ export default function Stack() {
             ))}
             <span className="caret mt-1" aria-hidden="true" />
           </pre>
-        </Card>
+        </TiltCard>
       </div>
     </section>
-  );
-}
-
-function SkillList({ items }) {
-  return (
-    <ul className="mt-6 flex flex-col divide-y divide-line">
-      {items.map(({ name, icon: Icon }) => (
-        <li key={name} className="flex items-center gap-4 py-3.5">
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl border border-line bg-bg">
-            <Icon className="size-[18px]" aria-hidden="true" />
-          </span>
-          <span className="font-medium tracking-tight">{name}</span>
-        </li>
-      ))}
-    </ul>
   );
 }
