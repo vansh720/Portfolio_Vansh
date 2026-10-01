@@ -13,6 +13,12 @@ export const profile = {
   resume: '/Vansh_Narula_Resume.pdf',
 };
 
+/** Contact form delivery via Web3Forms. The access key is public by design (it only allows sending to this inbox). */
+export const contactForm = {
+  endpoint: 'https://api.web3forms.com/submit',
+  accessKey: '59f68163-a00f-4863-911f-0aaeff945b49',
+};
+
 export const navLinks = [
   { id: 'about', label: 'About' },
   { id: 'work', label: 'Work' },

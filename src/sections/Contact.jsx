@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowUpRight, Check, CircleAlert, Copy, LoaderCircle, Send } from 'lucide-react';
-import { profile } from '../data/content';
+import { contactForm, profile } from '../data/content';
 import { gsap, SplitText, useGSAP, prefersReducedMotion } from '../lib/gsap';
 import { cn, EASE_OUT, trackPointer } from '../lib/utils';
 import { Button, Magnetic, RollText, SectionLabel } from '../components/ui';
@@ -25,7 +25,11 @@ const schema = z.object({
     .email('That email doesn’t look right — check it for typos.'),
   topic: z.enum(['role', 'freelance', 'hello']),
   message: z.string().trim().min(10, 'A little more detail helps — at least 10 characters.'),
+  // Honeypot: hidden from people; bots tend to tick it, and Web3Forms rejects those submissions.
+  botcheck: z.boolean().optional(),
 });
+
+const SEND_TIMEOUT_MS = 15000;
 
 const CHANNELS = [
   { label: 'LinkedIn', value: profile.linkedinLabel, href: profile.linkedin, external: true },
@@ -111,7 +115,8 @@ const inputClass =
 
 export default function Contact() {
   const root = useRef(null);
-  const [sent, setSent] = useState(false);
+  const [sentTo, setSentTo] = useState(null);
+  const [sendFailed, setSendFailed] = useState(false);
 
   const {
     register,
@@ -121,17 +126,42 @@ export default function Contact() {
   } = useForm({
     resolver: zodResolver(schema),
     mode: 'onTouched',
-    defaultValues: { name: '', email: '', topic: 'role', message: '' },
+    defaultValues: { name: '', email: '', topic: 'role', message: '', botcheck: false },
   });
 
   const onSubmit = async (data) => {
+    setSendFailed(false);
     const topic = TOPICS.find((t) => t.value === data.topic)?.label ?? 'Hello';
-    const subject = `${topic} — from ${data.name}`;
-    const body = `${data.message}\n\n— ${data.name}\n${data.email}`;
-    window.location.href = `mailto:${profile.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    await new Promise((resolve) => setTimeout(resolve, 700));
-    setSent(true);
-    reset();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), SEND_TIMEOUT_MS);
+    // FormData keeps this a "simple" CORS request, so no preflight that could be blocked.
+    const body = new FormData();
+    body.append('access_key', contactForm.accessKey);
+    body.append('subject', `Portfolio: ${topic} — from ${data.name}`);
+    body.append('from_name', 'Vansh Narula · Portfolio');
+    body.append('name', data.name);
+    body.append('email', data.email);
+    body.append('topic', topic);
+    body.append('message', data.message);
+    if (data.botcheck) body.append('botcheck', 'on');
+
+    try {
+      const response = await fetch(contactForm.endpoint, {
+        method: 'POST',
+        headers: { Accept: 'application/json' },
+        signal: controller.signal,
+        body,
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.success) throw new Error(result.message || `HTTP ${response.status}`);
+      setSentTo(data.email);
+      reset();
+    } catch {
+      // Keep what they typed so they can retry, and offer plain email as a fallback.
+      setSendFailed(true);
+    } finally {
+      clearTimeout(timeout);
+    }
   };
 
   useGSAP(
@@ -222,7 +252,7 @@ export default function Contact() {
               className="glow-card rounded-[28px] border border-line bg-surface/60 p-6 backdrop-blur-md md:p-9"
             >
               <AnimatePresence mode="wait" initial={false}>
-                {sent ? (
+                {sentTo ? (
                   <motion.div
                     key="sent"
                     className="flex flex-col items-start gap-5 py-6"
@@ -240,17 +270,12 @@ export default function Contact() {
                     >
                       <Check className="size-6" />
                     </motion.span>
-                    <p className="text-2xl font-semibold tracking-[-0.03em]">Your email is ready to send.</p>
+                    <p className="text-2xl font-semibold tracking-[-0.03em]">Message sent — thank you!</p>
                     <p className="max-w-[44ch] text-[15px] leading-relaxed text-muted">
-                      Your mail app should have opened with everything filled in — just hit send. If nothing opened,
-                      write to{' '}
-                      <a href={`mailto:${profile.email}`} className="text-fg underline underline-offset-4">
-                        {profile.email}
-                      </a>{' '}
-                      directly.
+                      It’s landed in my inbox. I’ll reply to <span className="font-medium text-fg">{sentTo}</span>.
                     </p>
-                    <Button as="button" type="button" variant="ghost" magnetic={false} onClick={() => setSent(false)} icon={null}>
-                      Write another message
+                    <Button as="button" type="button" variant="ghost" magnetic={false} onClick={() => setSentTo(null)} icon={null}>
+                      Send another message
                     </Button>
                   </motion.div>
                 ) : (
@@ -325,14 +350,38 @@ export default function Contact() {
                     </Field>
                     {!errors.message && (
                       <p id="message-help" className="-mt-4 text-[13px] text-muted">
-                        Sending opens your email app with this message ready to go.
+                        Goes straight to my inbox — I’ll reply by email.
                       </p>
                     )}
+
+                    <input type="checkbox" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" {...register('botcheck')} />
+
+                    <AnimatePresence initial={false}>
+                      {sendFailed && (
+                        <motion.div
+                          role="alert"
+                          className="flex items-start gap-3 rounded-2xl border border-accent/40 bg-accent/10 p-4 text-[14px] leading-relaxed"
+                          initial={{ opacity: 0, y: -8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -8 }}
+                          transition={{ duration: 0.3, ease: EASE_OUT }}
+                        >
+                          <CircleAlert className="mt-0.5 size-4 shrink-0 text-accent-ink" aria-hidden="true" />
+                          <p>
+                            That didn’t go through — please try again, or email me directly at{' '}
+                            <a href={`mailto:${profile.email}`} className="font-medium underline underline-offset-4">
+                              {profile.email}
+                            </a>
+                            .
+                          </p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
                     <div>
                       <Magnetic>
                         <button type="submit" disabled={isSubmitting} className="btn btn-accent group disabled:opacity-60">
-                          <RollText>{isSubmitting ? 'Opening mail…' : 'Send message'}</RollText>
+                          <RollText>{isSubmitting ? 'Sending…' : 'Send message'}</RollText>
                           {isSubmitting ? (
                             <span className="-mr-[0.4rem] grid size-7 place-items-center" aria-hidden="true">
                               <LoaderCircle className="size-4 animate-spin" />
